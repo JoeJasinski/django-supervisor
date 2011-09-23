@@ -46,10 +46,10 @@ from djsupervisor.config import get_merged_config
 try: 
     import watchdog
 except ImportError:
-    from djsupervisor.autoreloaders.polling import PollingAutoReloader
+    from djsupervisor.autoreloaders.polling_reloader import PollingAutoReloader
     auto_reloader=PollingAutoReloader
 else:
-    from djsupervisor.autoreloaders.watchdog import WatchdogAutoReloader
+    from djsupervisor.autoreloaders.watchdog_reloader import WatchdogAutoReloader
     auto_reloader=WatchdogAutoReloader
 
 class Command(BaseCommand):
