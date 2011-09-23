@@ -204,7 +204,6 @@ class Command(BaseCommand):
         if args:
             raise CommandError("supervisord autoreload takes no arguments")
         live_dirs = self._find_live_code_dirs()
-        mtimes = {}
         reload_progs = self._get_autoreload_programs(cfg_file)
 
         ar = auto_reloader(command=self, reload_progs=reload_progs, 
@@ -231,22 +230,6 @@ class Command(BaseCommand):
                     pass
         return reload_progs
 
-    def _code_has_changed(self,live_dirs,mtimes):
-        """Check whether code under the given directories has changed.
-
-        This is a simple check based on file mtime.  New or deleted files
-        don't count as code changes.
-        """
-        for filepath in self._find_live_code_files(live_dirs):
-            try:
-                stat = os.stat(filepath)
-            except EnvironmentError:
-                continue
-            if filepath not in mtimes:
-                mtimes[filepath] = stat.st_mtime
-            else:
-                if mtimes[filepath] != stat.st_mtime:
-                    return True
 
     def _find_live_code_dirs(self):
         """Find all directories in which we might have live python code.
