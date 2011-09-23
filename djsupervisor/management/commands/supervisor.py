@@ -43,6 +43,15 @@ from django.core.management.base import BaseCommand, CommandError
 from djsupervisor.config import get_merged_config
 
 
+try: 
+    import watchdog
+except ImportError:
+    from djsupervisor.autoreloaders.polling import PollingAutoReloader
+    auto_reloader=PollingAutoReloader
+else:
+    from djsupervisor.autoreloaders.watchdog import WatchdogAutoReloader
+    auto_reloader=WatchdogAutoReloader
+
 class Command(BaseCommand):
 
     args = "[<command> [<process>, ...]]"
@@ -197,14 +206,11 @@ class Command(BaseCommand):
         live_dirs = self._find_live_code_dirs()
         mtimes = {}
         reload_progs = self._get_autoreload_programs(cfg_file)
-        while True:
-            if self._code_has_changed(live_dirs,mtimes):
-                #  Fork a subprocess to make the restart call.
-                #  Otherwise supervisord might kill us and cancel the restart!
-                if os.fork() == 0:
-                    self.handle("restart",*reload_progs,**options)
-                return 0
-            time.sleep(1)
+
+        ar = auto_reloader(command=self, reload_progs=reload_progs, 
+                                  options=options, live_dirs=live_dirs)
+        ar.run()
+
 
     def _get_autoreload_programs(self,cfg_file):
         """Get the set of programs to auto-reload when code changes.
